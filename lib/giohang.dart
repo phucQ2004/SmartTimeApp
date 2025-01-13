@@ -10,6 +10,13 @@ class GioHangScreen extends StatefulWidget {
 }
 
 class _GioHangScreenState extends State<GioHangScreen> {
+  List<bool> isChecked = []; // Danh sách trạng thái checkbox
+  late final String idKhachHang;
+  late final int _idKhachHang;
+  List<dynamic> dsSanPham = [];
+  List<dynamic> dsSanPhamHienThi = []; // Danh sách sản phẩm hiển thị
+  bool isLoading = true;
+  double tongTien = 0.0; // Biến để lưu tổng tiền
   void incrementQuantity(int index) {
     setState(() {
       // Lấy sản phẩm hiện tại
@@ -74,8 +81,6 @@ class _GioHangScreenState extends State<GioHangScreen> {
     }
   }
 
-  late final String idKhachHang;
-  late final int _idKhachHang;
   @override
   void initState() {
     super.initState();
@@ -88,35 +93,33 @@ class _GioHangScreenState extends State<GioHangScreen> {
     }
   }
 
-  double tongTien = 0.0; // Biến để lưu tổng tiền
   void updateTotalAmount() {
-    tongTien = 0.0;
-    for (var sanPham in dsSanPhamHienThi) {
-      double gia = double.tryParse(sanPham['sanpham']['Gia']) ?? 0.0;
-      int soLuong = sanPham['So_luong_SP'] ?? 0;
-      tongTien += gia * soLuong;
+    tongTien = 0.0; // Reset tổng tiền mỗi lần cập nhật
+    for (int i = 0; i < dsSanPhamHienThi.length; i++) {
+      if (isChecked[i]) {
+        // Nếu sản phẩm được chọn (checkbox checked), cộng tiền
+        double gia =
+            double.tryParse(dsSanPhamHienThi[i]['sanpham']['Gia']) ?? 0.0;
+        int soLuong = dsSanPhamHienThi[i]['So_luong_SP'] ?? 0;
+        tongTien += gia * soLuong;
+      }
     }
   }
-
-  List<dynamic> dsSanPham = [];
-  List<dynamic> dsSanPhamHienThi = []; // Danh sách sản phẩm hiển thị
-  bool isLoading = true;
 
   Future<void> fetchSanPham() async {
     final url =
         Uri.parse('http://10.0.2.2:8000/api/gio-hang/xem/$_idKhachHang');
     try {
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         if (data['data'] is List) {
           setState(() {
             dsSanPham = data['data'];
             dsSanPhamHienThi = List.from(dsSanPham);
+            isChecked = List.filled(dsSanPhamHienThi.length,
+                false); // Khởi tạo danh sách trạng thái checkbox
             isLoading = false;
-
             updateTotalAmount();
           });
         } else {
@@ -220,12 +223,10 @@ class _GioHangScreenState extends State<GioHangScreen> {
               height: 1,
             ),
 
-            // Danh sách sản phẩm
             ListView.builder(
-              shrinkWrap: true, // Bắt buộc khi dùng trong SingleChildScrollView
-              physics:
-                  NeverScrollableScrollPhysics(), // Tắt cuộn riêng của ListView
-              itemCount: dsSanPhamHienThi.length, // Số sản phẩm trong giỏ hàng
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: dsSanPhamHienThi.length,
               itemBuilder: (context, index) {
                 final _sanPham = dsSanPhamHienThi[index];
                 return Card(
@@ -234,41 +235,94 @@ class _GioHangScreenState extends State<GioHangScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   elevation: 3,
-                  child: ListTile(
-                    leading: Image.network(
-                      _sanPham['sanpham']['anh_san_pham'] != null &&
-                              _sanPham['sanpham']['anh_san_pham'].isNotEmpty
-                          ? _sanPham['sanpham']['anh_san_pham'][0]['Link_anh']
-                          : 'https://via.placeholder.com/150',
-                      width: 50,
-                      height: 50,
-                    ),
-                    title: Text(
-                      _sanPham['sanpham']['Ten'],
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                      textAlign: TextAlign.left,
-                    ),
-                    subtitle: Column(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _sanPham['sanpham']['Gia'],
-                          textAlign: TextAlign.left,
-                        ),
-                        SizedBox(height: 5),
+                        // Row 1: Checkbox, Image, Name and Price
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Checkbox
+                            Checkbox(
+                              value: isChecked[index],
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  isChecked[index] = value ?? false;
+                                  updateTotalAmount();
+                                });
+                              },
+                            ),
+                            SizedBox(width: 8),
+                            // Image
+                            Container(
+                              width: 70,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                image: DecorationImage(
+                                  image: NetworkImage(
+                                    _sanPham['sanpham']['anh_san_pham'] !=
+                                                null &&
+                                            _sanPham['sanpham']['anh_san_pham']
+                                                .isNotEmpty
+                                        ? _sanPham['sanpham']['anh_san_pham'][0]
+                                            ['Link_anh']
+                                        : 'https://via.placeholder.com/150',
+                                  ),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            // Title and Price
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _sanPham['sanpham']['Ten'],
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${_sanPham['sanpham']['Gia']}đ',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                        // Row 2: Quantity Controls and Delete Icon
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Container(
-                              height: 40, // Set equal height
+                              height: 40,
+                              width: 40,
                               decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: Colors.grey, width: 1),
+                                border: Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: IconButton(
-                                icon: Icon(Icons.remove),
+                                icon: Icon(Icons.remove, size: 18),
                                 onPressed: () {
                                   decrementQuantity(index);
                                   setState(() {
@@ -277,35 +331,22 @@ class _GioHangScreenState extends State<GioHangScreen> {
                                 },
                               ),
                             ),
-                            SizedBox(width: 10),
-                            Container(
-                              height: 40, // Set equal height
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: Colors.grey, width: 1),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '${_sanPham['So_luong_SP']}',
-                                  style: TextStyle(
-                                      fontSize:
-                                          16), // Tăng kích thước text nếu cần
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
+                            SizedBox(width: 8),
+                            Text(
+                              '${_sanPham['So_luong_SP']}',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
-                            SizedBox(width: 10),
+                            SizedBox(width: 8),
                             Container(
-                              height: 40, // Set equal height
+                              height: 40,
+                              width: 40,
                               decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: Colors.grey, width: 1),
+                                border: Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: IconButton(
-                                icon: Icon(Icons.add),
+                                icon: Icon(Icons.add, size: 18),
                                 onPressed: () {
                                   incrementQuantity(index);
                                   setState(() {
@@ -314,28 +355,25 @@ class _GioHangScreenState extends State<GioHangScreen> {
                                 },
                               ),
                             ),
+                            SizedBox(width: 8),
+                            IconButton(
+                              icon: Icon(Icons.delete, color: Colors.grey),
+                              onPressed: () {
+                                final _idSanPham = _sanPham['ID_san_pham'];
+                                if (_idSanPham != null) {
+                                  removeSanPhamFromCart(_idSanPham);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                            Text('ID sản phẩm không hợp lệ')),
+                                  );
+                                }
+                              },
+                            ),
                           ],
                         ),
                       ],
-                    ),
-                    trailing: Container(
-                      height:
-                          40, // Set equal height to align with the quantity buttons
-                      child: IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          final _idSanPham = _sanPham['ID_san_pham'];
-                          if (_idSanPham != null) {
-                            removeSanPhamFromCart(_idSanPham); // Gọi hàm xóa
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('ID sản phẩm không hợp lệ')),
-                            );
-                          }
-                          print("ID sản phẩm: $_idSanPham");
-                        },
-                      ),
                     ),
                   ),
                 );
