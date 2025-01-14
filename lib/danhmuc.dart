@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'detailSanPham.dart';
 import 'giohang.dart';
 import 'thongtinkhachhang.dart';
+import 'donhang.dart';
 
 class DanhMucScreen extends StatefulWidget {
   final String idNguoiDung;
@@ -24,11 +26,10 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
   int _currentIndex = 0; // Quản lý tab hiện tại
 
   late final List<Widget> _screens;
-  late final String idKhachHang;
+
   @override
   void initState() {
     super.initState();
-    idKhachHang = widget.idNguoiDung;
     _screens = [
       DanhMucScreen(idNguoiDung: widget.idNguoiDung),
       GioHangScreen(idNguoiDung: widget.idNguoiDung),
@@ -36,70 +37,6 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
     ];
     fetchSanPham();
     fetchHang();
-  }
-
-  Future<void> ThemVaoGioHang(
-      int idKhachHang, int idSanPham, int soLuongSP) async {
-    setState(() {
-      isLoading = true;
-    });
-    print(
-        "Adding to cart: idKhachHang = $idKhachHang, idSanPham = $idSanPham, soLuongSP = $soLuongSP");
-    // URL API thêm vào giỏ hàng
-    final gioHangUrl = Uri.parse(
-        'http://10.0.2.2:8000/api/gio-hang/them/$idKhachHang/$idSanPham');
-
-    // Dữ liệu JSON gửi lên API
-    final gioHangData = jsonEncode({
-      "So_luong_SP": soLuongSP, // Gửi kèm số lượng sản phẩm
-    });
-    print("JSON Data: $gioHangData");
-    try {
-      // Gửi request thêm vào giỏ hàng
-      final gioHangResponse = await http.post(
-        gioHangUrl,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: gioHangData,
-      );
-
-      // Kiểm tra nếu thêm vào giỏ hàng thành công
-      if (gioHangResponse.statusCode == 200) {
-        // Parse kết quả từ API
-        final gioHangResult = jsonDecode(gioHangResponse.body);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              gioHangResult['message'] ?? 'Sản phẩm đã được thêm vào giỏ hàng!',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        // Trường hợp lỗi từ server
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi thêm vào giỏ hàng: ${gioHangResponse.body}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      // Xử lý lỗi kết nối
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Không thể kết nối đến máy chủ: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
   }
 
   //Lấy danh sách sản phẩm
@@ -199,8 +136,8 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
           controller: searchController,
           onChanged: onSearch,
           decoration: InputDecoration(
-            hintText: 'ID : ${widget.idNguoiDung}',
-            prefixIcon: const Icon(Icons.search, color: Colors.grey),
+            hintText: 'Tìm kiếm trên SmartTime ',
+            prefixIcon: const Icon(Icons.search, color: Color(0xFF040434)),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
@@ -230,8 +167,8 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               color: selectedHangID == null
-                                  ? Colors.blueGrey
-                                  : Colors.white,
+                                  ? Color(0xFF040434)
+                                  : Colors.grey,
                               borderRadius:
                                   BorderRadius.circular(8.0), // Bo góc
                               border: Border.all(
@@ -247,7 +184,7 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
                               child: const Text(
                                 "Tất cả",
                                 style:
-                                    TextStyle(color: Colors.black), // Màu chữ
+                                    TextStyle(color: Colors.white), // Màu chữ
                               ),
                             ),
                           ),
@@ -260,8 +197,8 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: selectedHangID == hang['ID_hang']
-                                ? Colors.blueGrey
-                                : Colors.white,
+                                ? Color(0xFF040434)
+                                : Colors.grey,
                             borderRadius: BorderRadius.circular(8.0), // Bo góc
                             border: Border.all(
                               color: Colors.grey, // Viền
@@ -275,7 +212,7 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
                             child: Text(
                               hang['Ten_hang'],
                               style: const TextStyle(
-                                  color: Colors.black), // Màu chữ
+                                  color: Colors.white), // Màu chữ
                             ),
                           ),
                         ),
@@ -309,8 +246,8 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => SanPhamDetailScreen(
+                                      idNguoiDung: widget.idNguoiDung,
                                       sanPham: sanPham,
-                                      idNguoiDung: idKhachHang,
                                     ),
                                   ),
                                 );
@@ -329,10 +266,9 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
           setState(() {
             _currentIndex = index;
           });
-
           // Điều hướng đến màn hình tương ứng
           if (index == 0) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) =>
@@ -340,24 +276,31 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
               ),
             );
           } else if (index == 1) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => GioHangScreen(
-                    idNguoiDung: idKhachHang), // Màn hình giỏ hàng
+                    idNguoiDung: widget.idNguoiDung), // Màn hình giỏ hàng
               ),
             );
           } else if (index == 2) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => ThongTinKhachHangScreen(
-                    idNguoiDung: widget.idNguoiDung), // Truyền tên đăng nhập
+                builder: (context) => DonhangSreen(),
+              ),
+            );
+          } else if (index == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ThongTinKhachHangScreen(idNguoiDung: widget.idNguoiDung),
               ),
             );
           }
         },
-        selectedItemColor: Colors.blueGrey,
+        selectedItemColor: Color(0xFF040434),
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
@@ -367,6 +310,10 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
             label: 'Giỏ hàng',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_shipping),
+            label: 'Đơn hàng',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -388,13 +335,20 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-              child: Image.network(
-                sanPham['anh_san_pham'] != null &&
-                        sanPham['anh_san_pham'].isNotEmpty
-                    ? sanPham['anh_san_pham'][0]['Link_anh']
-                    : 'https://via.placeholder.com/150',
-                fit: BoxFit.cover,
-                width: double.infinity,
+              child: PageView.builder(
+                itemCount: sanPham['anh_san_pham']?.length ?? 1,
+                itemBuilder: (context, index) {
+                  final imageUrl = sanPham['anh_san_pham'] != null &&
+                          sanPham['anh_san_pham'].isNotEmpty &&
+                          index < sanPham['anh_san_pham'].length
+                      ? sanPham['anh_san_pham'][index]['Link_anh']
+                      : 'https://via.placeholder.com/150';
+                  return Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  );
+                },
               ),
             ),
           ),
@@ -406,6 +360,7 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
                 Text(
                   sanPham['Ten'],
                   style: TextStyle(
+                    color: Color(0xFF040434),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -427,33 +382,19 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        '${sanPham['Gia'] ?? '0'} \VNĐ',
+                        '${NumberFormat("#,###", "vi_VN").format(double.tryParse(sanPham['Gia'] ?? '0') ?? 0)} VNĐ',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 13,
                           color: Colors.black,
                         ),
                       ),
                     ),
                     IconButton(
-                      onPressed: () {
-                        final _idKhachHang = int.tryParse(idKhachHang) ?? 0;
-                        // ScaffoldMessenger.of(context).showSnackBar(
-                        //   SnackBar(
-                        //     content: Text(
-                        //         'id khachs hangf ${_idKhachHang.runtimeType}'),
-                        //     backgroundColor: Colors.red,
-                        //   ),
-                        // );
-                        if (_idKhachHang != 0) {
-                          ThemVaoGioHang(
-                              _idKhachHang, sanPham['ID_san_pham'], 1);
-                        }
-
-                        //print('${sanPham['ID_san_pham']}');
-                      },
+                      onPressed: () {},
                       icon: Icon(
                         Icons.shopping_cart,
+                        color: Color(0xFF040434),
                       ),
                     ),
                   ],
