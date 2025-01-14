@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 import 'danhmuc.dart';
 import 'login.dart';
 import 'giohang.dart';
-import 'doimatkhau.dart'; // Thêm import cho màn hình Đổi mật khẩu
+import 'thongtincanhan.dart';
+import 'thongtindiachi.dart';
+import 'donhang.dart';
 
 class ThongTinKhachHangScreen extends StatefulWidget {
   final String idNguoiDung;
@@ -19,7 +21,7 @@ class ThongTinKhachHangScreen extends StatefulWidget {
 class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
   String? username;
   bool isLoading = true;
-  int _currentIndex = 2; // Quản lý tab hiện tại
+  int _currentIndex = 3; // Quản lý tab hiện tại
 
   late final List<Widget> _screens;
 
@@ -29,6 +31,7 @@ class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
     _screens = [
       DanhMucScreen(idNguoiDung: widget.idNguoiDung),
       GioHangScreen(idNguoiDung: widget.idNguoiDung),
+      DonHangScreen(),
       ThongTinKhachHangScreen(idNguoiDung: widget.idNguoiDung),
     ];
     fetchUsername(widget.idNguoiDung);
@@ -86,50 +89,49 @@ class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
           children: [
             SizedBox(height: 30),
             Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF040434),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: EdgeInsets.all(8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  const Image(
-                    image: AssetImage('images/logo.png'),
-                    height: 100,
-                    width: 100,
-                  ),
-                  SizedBox(width: 10),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '$username',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 23,
-                          fontWeight: FontWeight.bold,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF040434),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: EdgeInsets.all(8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    const Image(
+                      image: AssetImage('images/logo.png'),
+                      height: 100,
+                      width: 100,
+                    ),
+                    SizedBox(width: 10),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '$username',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 23,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 10),
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Color(0xFF040434)),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Text(
-                          'Thành viên',
-                          style: TextStyle(color: Color(0xFF040434)),
-                        ),
-                      )
-                    ],
-                  ),
-                ],
-              ),
-            ),
+                        SizedBox(height: 10),
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Color(0xFF040434)),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            'Thành viên',
+                            style: TextStyle(color: Color(0xFF040434)),
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                )),
             SizedBox(height: 20),
             Divider(
               color: Color(0xFF040434),
@@ -140,7 +142,13 @@ class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Chức năng thông tin cá nhân
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ThongTinCaNhanScreen(idNguoiDung: widget.idNguoiDung),
+                    ),
+                  );
                 },
                 icon: Icon(Icons.info_outline_rounded, color: Colors.white),
                 label: const Text(
@@ -161,14 +169,34 @@ class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Chuyển sang màn hình Đổi mật khẩu
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          DoiMatKhauScreen(idNguoiDung: widget.idNguoiDung),
+                          ThongTinDiaChiScreen(idNguoiDung: widget.idNguoiDung),
                     ),
                   );
+                },
+                icon: Icon(Icons.location_on_outlined, color: Colors.white),
+                label: const Text(
+                  'Thông tin địa chỉ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF040434),
+                ),
+              ),
+            ),
+            SizedBox(height: 30),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // Add functionality here
                 },
                 icon: Icon(Icons.lock_clock_outlined, color: Colors.white),
                 label: const Text(
@@ -290,8 +318,15 @@ class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    ThongTinKhachHangScreen(idNguoiDung: widget.idNguoiDung),
+                builder: (context) => DonHangScreen(), // Màn hình đơn hàng
+              ),
+            );
+          } else if (index == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ThongTinKhachHangScreen(
+                    idNguoiDung: widget.idNguoiDung), // Truyền tên đăng nhập
               ),
             );
           }
@@ -306,6 +341,10 @@ class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
             label: 'Giỏ hàng',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_shipping),
+            label: 'Đơn hàng',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
