@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'detailSanPham.dart';
 import 'giohang.dart';
 import 'thongtinkhachhang.dart';
+import 'donhang.dart';
 
 class DanhMucScreen extends StatefulWidget {
   final String idNguoiDung;
@@ -32,6 +33,7 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
     _screens = [
       DanhMucScreen(idNguoiDung: widget.idNguoiDung),
       GioHangScreen(idNguoiDung: widget.idNguoiDung),
+      DonHangScreen(),
       ThongTinKhachHangScreen(idNguoiDung: widget.idNguoiDung),
     ];
     fetchSanPham();
@@ -351,6 +353,13 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
+                  builder: (context) => DonHangScreen() // Màn hình giỏ hàng
+                  ),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
                 builder: (context) => ThongTinKhachHangScreen(
                     idNguoiDung: widget.idNguoiDung), // Truyền tên đăng nhập
               ),
@@ -367,6 +376,10 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
             label: 'Giỏ hàng',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_shipping),
+            label: 'Đơn hàng',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
