@@ -31,7 +31,7 @@ class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
     _screens = [
       DanhMucScreen(idNguoiDung: widget.idNguoiDung),
       GioHangScreen(idNguoiDung: widget.idNguoiDung),
-      DonHangScreen(),
+      DonHangScreen(idNguoiDung: widget.idNguoiDung),
       ThongTinKhachHangScreen(idNguoiDung: widget.idNguoiDung),
     ];
     fetchUsername(widget.idNguoiDung);
@@ -98,7 +98,7 @@ class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     const Image(
-                      image: AssetImage('images/logo.png'),
+                      image: AssetImage('images/logo.jpg'),
                       height: 100,
                       width: 100,
                     ),
@@ -318,7 +318,8 @@ class _ThongTinKhachHangScreenState extends State<ThongTinKhachHangScreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => DonHangScreen(), // Màn hình đơn hàng
+                builder: (context) => DonHangScreen(
+                    idNguoiDung: widget.idNguoiDung), // Màn hình đơn hàng
               ),
             );
           } else if (index == 3) {

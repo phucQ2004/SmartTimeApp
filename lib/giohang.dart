@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:smart_time/donhang.dart';
+
 class GioHangScreen extends StatefulWidget {
   final String idNguoiDung;
   const GioHangScreen({super.key, required this.idNguoiDung});
@@ -14,9 +16,218 @@ class _GioHangScreenState extends State<GioHangScreen> {
   late final String idKhachHang;
   late final int _idKhachHang;
   List<dynamic> dsSanPham = [];
-  List<dynamic> dsSanPhamHienThi = []; // Danh sách sản phẩm hiển thị
+  List<dynamic> dsSanPhamHienThi = [];
+  List<dynamic> selectedProducts = []; // Danh sách sản phẩm hiển thị
   bool isLoading = true;
   double tongTien = 0.0; // Biến để lưu tổng tiền
+  String tenNguoiNhan = "";
+  String diaChi = "";
+  String soDienThoai = "";
+  int ID_phuong_thuc = 1;
+  String tenPTTT = "";
+  String moTaPTTT = "";
+  int idDonHang = 0;
+
+  Future<void> fetchDSDonHang(String idNguoiDung) async {
+    final url = Uri.parse('http://10.0.2.2:8000/api/donhang/list/$idNguoiDung');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success']) {
+          final data = responseData['data'];
+          print('id don hang: ${data[0]['ID_don_hang']}');
+          setState(() {
+            idDonHang = data[0]['ID_don_hang'];
+            print("id don hang $idDonHang");
+            // Xử lý ngày sinh
+          });
+        } else {
+          setState(() {
+            idDonHang = -1;
+            // Không có thông tin khách hàng
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(responseData['message']),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi máy chủ: ${response.statusCode}'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể kết nối đến máy chủ: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> fetchThongTinKhachHang(int idNguoiDung) async {
+    final url = Uri.parse('http://10.0.2.2:8000/api/khachhang/$idNguoiDung');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success']) {
+          final data = responseData['data'];
+          setState(() {
+            tenNguoiNhan = data['Ten_day_du'];
+            diaChi = data['Dia_chi'];
+            soDienThoai = data['So_dien_thoai'];
+            print("$tenNguoiNhan  $diaChi, $soDienThoai");
+            // Xử lý ngày sinh
+          });
+        } else {
+          setState(() {
+            tenNguoiNhan = "Chưa cập nhật";
+            diaChi = "Chưa cập nhật";
+            soDienThoai = "Chưa cập nhật";
+            print("$tenNguoiNhan  $diaChi, $soDienThoai");
+            // Không có thông tin khách hàng
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(responseData['message']),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi máy chủ: ${response.statusCode}'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể kết nối đến máy chủ: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> fetchPTTT() async {
+    final url = Uri.parse('http://10.0.2.2:8000/api/pttt/$ID_phuong_thuc');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success']) {
+          final data = responseData['data'];
+          setState(() {
+            tenPTTT = data['Ten'];
+            moTaPTTT = data['Mo_ta'];
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Phương thức không hợp lệ'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi máy chủ: ${response.statusCode}'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể kết nối đến máy chủ: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> TaoDonHang(
+    int _idKhachHang,
+    String _tenNguoiNhan,
+    String _diaChi,
+    String _soDienThoai,
+    int _ID_phuong_thuc,
+  ) async {
+    final donHangUrl =
+        Uri.parse('http://10.0.2.2:8000/api/donhang/them/$_idKhachHang');
+    final donHangData = jsonEncode({
+      "selectedProductIDs": selectedProducts,
+      "ID_khach_hang": _idKhachHang,
+      "Ten_nguoi_nhan": _tenNguoiNhan,
+      "Dia_chi": _diaChi,
+      "So_dien_thoai": _soDienThoai,
+      "ID_phuong_thuc": _ID_phuong_thuc,
+      "ID_DC": 1,
+      "Trang_thai": "Chờ xác nhận",
+      "Trang_thai_thanh_toan": "Chưa thanh toán",
+    });
+
+    try {
+      final response = await http.post(
+        donHangUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: donHangData,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final result = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(result['message'] ?? 'Đơn hàng đã được tạo thành công!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        final errorResponse = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('Lỗi: ${errorResponse['message'] ?? 'Không rõ lỗi.'}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Lỗi kết nối: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void incrementQuantity(int index) {
     setState(() {
       // Lấy sản phẩm hiện tại
@@ -91,6 +302,7 @@ class _GioHangScreenState extends State<GioHangScreen> {
     } else {
       fetchSanPham(); // Gọi API nếu ID hợp lệ
     }
+    fetchThongTinKhachHang(_idKhachHang);
   }
 
   void updateTotalAmount() {
@@ -172,6 +384,96 @@ class _GioHangScreenState extends State<GioHangScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi kết nối: $e')),
       );
+    }
+  }
+
+  void placeProduct() {
+    selectedProducts = dsSanPhamHienThi
+        .asMap()
+        .entries
+        .where((entry) => isChecked[entry.key])
+        .map((entry) => entry.value['sanpham']['ID_san_pham'])
+        .toList();
+    if (selectedProducts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Vui lòng chọn ít nhất một sản phẩm để đặt hàng.')),
+      );
+      return;
+    }
+  }
+
+  Future<void> placeDetailOrder(int _idDonHang) async {
+    //selectedProducts = selectedProducts;
+    // Dữ liệu cần gửi lên server
+
+    final orderData = {
+      'selectedProducts': selectedProducts,
+      // 'Ten_nguoi_nhan': 'Nguyễn Văn A', // Thay đổi theo dữ liệu thực tế
+      // 'Dia_chi': '123 Đường ABC', // Thay đổi theo dữ liệu thực tế
+      // 'So_dien_thoai': '0123456789', // Thay đổi theo dữ liệu thực tế
+      // 'ID_phuong_thuc': 1 // Ví dụ: ID phương thức thanh toán
+    };
+
+    final url =
+        Uri.parse('http://10.0.2.2:8000/api/donhang/chitiet/them/$_idDonHang');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(orderData), // Chuyển dữ liệu sang JSON
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Đặt hàng thành công')),
+          );
+          // Làm mới danh sách sản phẩm hoặc chuyển hướng
+          await fetchSanPham();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không thể đặt hàng: ${data['message']}')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi server: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      print("Lỗi kết nối: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi kết nối: $e')),
+      );
+    }
+  }
+
+  // Hàm xóa các sản phẩm đã chọn khỏi giỏ hàng
+  Future<void> removeSelectedProducts(List<dynamic> selectedProducts) async {
+    for (var product in selectedProducts) {
+      final idSanPham = product['sanpham']['ID_san_pham'];
+      final url = Uri.parse(
+          'http://10.0.2.2:8000/api/gio-hang/xoa/$_idKhachHang/$idSanPham');
+
+      try {
+        final response = await http.delete(url);
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Đặt thành công')),
+          );
+        }
+        if (response.statusCode != 200) {
+          print('Không thể xóa sản phẩm với ID: $idSanPham');
+        }
+      } catch (e) {
+        print('Lỗi khi xóa sản phẩm $idSanPham: $e');
+      }
     }
   }
 
@@ -413,9 +715,44 @@ class _GioHangScreenState extends State<GioHangScreen> {
                   SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {
-                      // Xử lý thanh toán
+                      placeProduct();
+                      fetchThongTinKhachHang(_idKhachHang);
+                      String updateIfEmpty(String value) =>
+                          value.isEmpty ? "chưa cập nhật" : value;
+                      final updatedTenNguoiNhan = updateIfEmpty(tenNguoiNhan);
+                      final updatedDiaChi = updateIfEmpty(diaChi);
+                      final updatedSoDienThoai = updateIfEmpty(soDienThoai);
+                      if (_idKhachHang != 0) {
+                        TaoDonHang(_idKhachHang, updatedTenNguoiNhan,
+                            updatedDiaChi, updatedSoDienThoai, ID_phuong_thuc);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('ID Khách Hàng không hợp lệ.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                      // // Xử lý thanh toán
+                      // fetchDSDonHang(idKhachHang);
+                      // print('id khách: $idKhachHang');
+                      // print("id don hang $idDonHang");
+                      // placeDetailOrder(idDonHang);
+                      // print(selectedProducts);
+                      // placeProduct();
+                      // //removeSelectedProducts(selectedProducts);
+                      // //fetchSanPham();
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DonHangScreen(
+                            idNguoiDung: idKhachHang,
+                          ),
+                        ),
+                      );
                     },
-                    child: Text('Thanh toán'),
+                    child: Text('Đặt hàng'),
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(

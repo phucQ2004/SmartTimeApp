@@ -1,132 +1,138 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class DonHangScreen extends StatefulWidget {
+  final String idNguoiDung;
+  const DonHangScreen({super.key, required this.idNguoiDung});
   @override
-  _DonHangScreenState createState() => _DonHangScreenState();
+  DonHangScreenState createState() => DonHangScreenState();
 }
 
-class _DonHangScreenState extends State<DonHangScreen> {
-  final List<Map<String, dynamic>> cartItems = [
-    {
-      'image': 'https://via.placeholder.com/150', // Replace with actual image
-      'name': 'Casio G-Shock GA-2100',
-      'price': 2500000,
-      'quantity': 2,
-    },
-    {
-      'image': 'https://via.placeholder.com/150',
-      'name': 'Hublot Classic Fusion Automatic 18K Gold',
-      'price': 10000000,
-      'quantity': 4,
-    },
-    {
-      'image': 'https://via.placeholder.com/150',
-      'name': 'Hublot Big Bang',
-      'price': 20000000,
-      'quantity': 5,
-    },
-    {
-      'image': 'https://via.placeholder.com/150',
-      'name': 'Omega Speedmaster Professional',
-      'price': 15000000,
-      'quantity': 3,
-    },
-  ];
+class DonHangScreenState extends State<DonHangScreen> {
+  int selectedTab = 0;
 
-  double get totalPrice {
-    return cartItems.fold(
-        0, (sum, item) => sum + (item['price'] * item['quantity']));
-  }
-
-  void updateQuantity(int index, int delta) {
-    setState(() {
-      cartItems[index]['quantity'] =
-          (cartItems[index]['quantity'] + delta).clamp(1, 99);
-    });
+  // late final String idKhachHang;
+  // late final int _idKhachHang;
+  @override
+  void initState() {
+    super.initState();
+    // idKhachHang = widget.idNguoiDung;
+    // _idKhachHang = int.tryParse(idKhachHang) ?? 0;
+    // fetchThongTinKhachHang(widget.idNguoiDung);
+    // TaoDonHang(_idKhachHang, tenNguoiNhan, diaChi, soDienThoai, ID_phuong_thuc);
+    //fetchPTTT();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Đơn hàng của bạn'),
-        backgroundColor: Colors.grey,
+        title: Text('Đơn hàng'),
+        backgroundColor: Colors.green,
       ),
       body: Column(
         children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: cartItems.length,
-              itemBuilder: (context, index) {
-                final item = cartItems[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  child: ListTile(
-                    leading:
-                        Image.network(item['image'], width: 50, height: 50),
-                    title: Text(item['name']),
-                    subtitle: Text('${item['price'].toString()}đ',
-                        style: TextStyle(color: Colors.red)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.remove),
-                          onPressed: () => updateQuantity(index, -1),
-                        ),
-                        Text('${item['quantity']}'),
-                        IconButton(
-                          icon: Icon(Icons.add),
-                          onPressed: () => updateQuantity(index, 1),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.grey),
-                          onPressed: () {
-                            setState(() {
-                              cartItems.removeAt(index);
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+          // Tab bar section
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
-              //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Text(
-                  'Tổng cộng:   ',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  '${totalPrice.toString()}đ',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red),
-                ),
-                Spacer(),
-                ElevatedButton(
-                  onPressed: () {
-                    // Xử lý thanh toán
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 185, 111, 111),
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  ),
-                  child: Text(
-                    'Thanh toán',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                )
+                _buildTab('Tất cả', 0, 884),
+                _buildTab('Chờ xác nhận', 1, 9),
+                _buildTab('Đang giao', 2, 104),
+                _buildTab('Đã giao', 3, 695),
+                _buildTab('Đã hủy', 4, 76),
               ],
+            ),
+          ),
+
+          Divider(),
+
+          // Search bar section
+
+          // Table header
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                    flex: 2,
+                    child: Text('Thông tin đơn hàng',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    child: Text('Ngày tạo',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    child: Text('Trạng thái',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    child: Text('Tổng tiền',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    child: Text('Hành động',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+              ],
+            ),
+          ),
+
+          Divider(),
+
+          // Order list section
+          Expanded(
+            child: ListView.builder(
+              itemCount: 1,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.grey[300],
+                    child: Icon(Icons.person, color: Colors.black),
+                  ),
+                  title: Text('Khách lẻ'),
+                  subtitle: Text('28/09/2022 14:07'),
+                  trailing: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('527.000đ',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Đã giao', style: TextStyle(color: Colors.green)),
+                    ],
+                  ),
+                  onTap: () {},
+                );
+              },
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTab(String title, int index, int count) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedTab = index;
+        });
+      },
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: selectedTab == index ? Colors.green : Colors.black,
+              fontWeight:
+                  selectedTab == index ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            '$count',
+            style: TextStyle(
+              color: selectedTab == index ? Colors.green : Colors.black,
+              fontSize: 12,
             ),
           ),
         ],

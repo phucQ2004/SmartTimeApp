@@ -33,7 +33,9 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
     _screens = [
       DanhMucScreen(idNguoiDung: widget.idNguoiDung),
       GioHangScreen(idNguoiDung: widget.idNguoiDung),
-      DonHangScreen(),
+      DonHangScreen(
+        idNguoiDung: widget.idNguoiDung,
+      ),
       ThongTinKhachHangScreen(idNguoiDung: widget.idNguoiDung),
     ];
     fetchSanPham();
@@ -353,7 +355,9 @@ class _SanPhamScreenState extends State<DanhMucScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => DonHangScreen() // Màn hình giỏ hàng
+                  builder: (context) => DonHangScreen(
+                        idNguoiDung: idKhachHang,
+                      ) // Màn hình don hàng
                   ),
             );
           } else if (index == 3) {
