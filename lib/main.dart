@@ -15,9 +15,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        body: Center(
-          child: LoginScreen(),
-        ),
+        body: Center(child: LoginScreen()),
       ),
     );
   }

@@ -6,22 +6,75 @@ class DonHangScreen extends StatefulWidget {
   final String idNguoiDung;
   const DonHangScreen({super.key, required this.idNguoiDung});
   @override
-  DonHangScreenState createState() => DonHangScreenState();
+  _DonHangScreenState createState() => _DonHangScreenState();
 }
 
-class DonHangScreenState extends State<DonHangScreen> {
+class _DonHangScreenState extends State<DonHangScreen> {
+  List orders = [];
+  List displayOrders = [];
   int selectedTab = 0;
-
-  // late final String idKhachHang;
-  // late final int _idKhachHang;
+  List<String> LStatus = [];
+  late final String idKhachHang;
+  late final int _idKhachHang;
   @override
   void initState() {
     super.initState();
-    // idKhachHang = widget.idNguoiDung;
-    // _idKhachHang = int.tryParse(idKhachHang) ?? 0;
+    idKhachHang = widget.idNguoiDung;
+    _idKhachHang = int.tryParse(idKhachHang) ?? 0;
     // fetchThongTinKhachHang(widget.idNguoiDung);
     // TaoDonHang(_idKhachHang, tenNguoiNhan, diaChi, soDienThoai, ID_phuong_thuc);
     //fetchPTTT();
+    fetchAllOrders();
+  }
+
+  Future<void> fetchAllOrders() async {
+    // Thay thế bằng logic lấy ID_khach_hang của bạn
+    try {
+      final String apiUrl =
+          'http://10.0.2.2:8000/api/donhang/list/$_idKhachHang';
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success']) {
+          setState(() {
+            orders = responseData['data'];
+            displayOrders = List.from(orders);
+          });
+        } else {
+          print("Danh sách không hợp lệ");
+        }
+      } else {
+        print('Yêu cầu thất bại với mã lỗi: ${response.statusCode}');
+        setState(() {});
+      }
+    } catch (e) {
+      print('Đã xảy ra lỗi: $e');
+      setState(() {});
+    }
+  }
+
+  // Phương thức để lọc đơn hàng theo trạng thái
+  Future<void> filterOrdersByStatus(String status) async {
+    try {
+      final String apiUrl = 'http://10.0.2.2:8000/api/donhang/filter/$status';
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success']) {
+          setState(() {
+            displayOrders = responseData['data'];
+          });
+        } else {
+          print("Danh sách không hợp lệ");
+        }
+      } else {
+        print('Yêu cầu thất bại với mã lỗi: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Đã xảy ra lỗi: $e');
+    }
   }
 
   @override

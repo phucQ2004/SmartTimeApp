@@ -387,7 +387,7 @@ class _GioHangScreenState extends State<GioHangScreen> {
     }
   }
 
-  void placeProduct() {
+  bool placeProduct() {
     selectedProducts = dsSanPhamHienThi
         .asMap()
         .entries
@@ -399,60 +399,61 @@ class _GioHangScreenState extends State<GioHangScreen> {
         SnackBar(
             content: Text('Vui lòng chọn ít nhất một sản phẩm để đặt hàng.')),
       );
-      return;
+      return false; // Trả về false nếu không có sản phẩm nào được chọn
     }
+    return true; // Trả về true nếu có sản phẩm được chọn
   }
 
-  Future<void> placeDetailOrder(int _idDonHang) async {
-    //selectedProducts = selectedProducts;
-    // Dữ liệu cần gửi lên server
+  // Future<void> placeDetailOrder(int _idDonHang) async {
+  //   //selectedProducts = selectedProducts;
+  //   // Dữ liệu cần gửi lên server
 
-    final orderData = {
-      'selectedProducts': selectedProducts,
-      // 'Ten_nguoi_nhan': 'Nguyễn Văn A', // Thay đổi theo dữ liệu thực tế
-      // 'Dia_chi': '123 Đường ABC', // Thay đổi theo dữ liệu thực tế
-      // 'So_dien_thoai': '0123456789', // Thay đổi theo dữ liệu thực tế
-      // 'ID_phuong_thuc': 1 // Ví dụ: ID phương thức thanh toán
-    };
+  //   final orderData = {
+  //     'selectedProducts': selectedProducts,
+  //     // 'Ten_nguoi_nhan': 'Nguyễn Văn A', // Thay đổi theo dữ liệu thực tế
+  //     // 'Dia_chi': '123 Đường ABC', // Thay đổi theo dữ liệu thực tế
+  //     // 'So_dien_thoai': '0123456789', // Thay đổi theo dữ liệu thực tế
+  //     // 'ID_phuong_thuc': 1 // Ví dụ: ID phương thức thanh toán
+  //   };
 
-    final url =
-        Uri.parse('http://10.0.2.2:8000/api/donhang/chitiet/them/$_idDonHang');
+  //   final url =
+  //       Uri.parse('http://10.0.2.2:8000/api/donhang/chitiet/them/$_idDonHang');
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(orderData), // Chuyển dữ liệu sang JSON
-      );
+  //   try {
+  //     final response = await http.post(
+  //       url,
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: jsonEncode(orderData), // Chuyển dữ liệu sang JSON
+  //     );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+  //     if (response.statusCode == 200) {
+  //       final data = jsonDecode(response.body);
 
-        if (data['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Đặt hàng thành công')),
-          );
-          // Làm mới danh sách sản phẩm hoặc chuyển hướng
-          await fetchSanPham();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Không thể đặt hàng: ${data['message']}')),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi server: ${response.statusCode}')),
-        );
-      }
-    } catch (e) {
-      print("Lỗi kết nối: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi kết nối: $e')),
-      );
-    }
-  }
+  //       if (data['success'] == true) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text('Đặt hàng thành công')),
+  //         );
+  //         // Làm mới danh sách sản phẩm hoặc chuyển hướng
+  //         await fetchSanPham();
+  //       } else {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text('Không thể đặt hàng: ${data['message']}')),
+  //         );
+  //       }
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Lỗi server: ${response.statusCode}')),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print("Lỗi kết nối: $e");
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Lỗi kết nối: $e')),
+  //     );
+  //   }
+  // }
 
   // Hàm xóa các sản phẩm đã chọn khỏi giỏ hàng
   Future<void> removeSelectedProducts(List<dynamic> selectedProducts) async {
@@ -715,42 +716,38 @@ class _GioHangScreenState extends State<GioHangScreen> {
                   SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {
-                      placeProduct();
-                      fetchThongTinKhachHang(_idKhachHang);
-                      String updateIfEmpty(String value) =>
-                          value.isEmpty ? "chưa cập nhật" : value;
-                      final updatedTenNguoiNhan = updateIfEmpty(tenNguoiNhan);
-                      final updatedDiaChi = updateIfEmpty(diaChi);
-                      final updatedSoDienThoai = updateIfEmpty(soDienThoai);
-                      if (_idKhachHang != 0) {
-                        TaoDonHang(_idKhachHang, updatedTenNguoiNhan,
-                            updatedDiaChi, updatedSoDienThoai, ID_phuong_thuc);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('ID Khách Hàng không hợp lệ.'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                      // Kiểm tra sản phẩm được chọn trước khi chuyển trang
+                      if (placeProduct()) {
+                        fetchThongTinKhachHang(_idKhachHang);
+                        String updateIfEmpty(String value) =>
+                            value.isEmpty ? "chưa cập nhật" : value;
+                        final updatedTenNguoiNhan = updateIfEmpty(tenNguoiNhan);
+                        final updatedDiaChi = updateIfEmpty(diaChi);
+                        final updatedSoDienThoai = updateIfEmpty(soDienThoai);
+                        if (_idKhachHang != 0) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DonHangScreen(
+                                idNguoiDung: idKhachHang,
+                              ),
+                            ),
+                          );
+                          TaoDonHang(
+                              _idKhachHang,
+                              updatedTenNguoiNhan,
+                              updatedDiaChi,
+                              updatedSoDienThoai,
+                              ID_phuong_thuc);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('ID Khách Hàng không hợp lệ.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
-                      // // Xử lý thanh toán
-                      // fetchDSDonHang(idKhachHang);
-                      // print('id khách: $idKhachHang');
-                      // print("id don hang $idDonHang");
-                      // placeDetailOrder(idDonHang);
-                      // print(selectedProducts);
-                      // placeProduct();
-                      // //removeSelectedProducts(selectedProducts);
-                      // //fetchSanPham();
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DonHangScreen(
-                            idNguoiDung: idKhachHang,
-                          ),
-                        ),
-                      );
                     },
                     child: Text('Đặt hàng'),
                     style: ElevatedButton.styleFrom(
